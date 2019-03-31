@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author ben.wangz
@@ -60,6 +61,16 @@ public class RichExecutor extends DefaultExecutor {
 
     public long processId() {
         // TODO upgrade to java 9 and use Process.pid()
+        // wait if process has not initialized
+        int retry = 0;
+        while (retry < 10 && null == process) {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                LOGGER.info(String.format("ignore InterruptedException: %s", e.getMessage()), e);
+            }
+            retry += 1;
+        }
         switch (ProcessImplementType.of(process)) {
             case UnixProcess:
                 Integer unixLikeProcessId = extractUnixLikeProcessId(process);
